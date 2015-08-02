@@ -1,0 +1,12 @@
+{
+  "name": "rcrowt/whm-accounts",
+  "description": "A simple Object Orientated PHP Client for the Web Host Manager/CPanel API",
+  "require": {
+    "php": ">=5.5.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "RCrowt\\": "src/"
+    }
+  }
+}
