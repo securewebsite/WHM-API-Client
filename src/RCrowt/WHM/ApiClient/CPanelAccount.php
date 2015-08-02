@@ -49,11 +49,16 @@ class CPanelAccount extends CPanelObject
         return $this->get('email');
     }
 
+    public function getPackage()
+    {
+        return $this->client->getPackage($this->getPackageName());
+    }
+
     /**
      * Get the name of the plan the account is on.
      * @return null|string
      */
-    public function getPlanName()
+    public function getPackageName()
     {
         return $this->get('plan');
     }

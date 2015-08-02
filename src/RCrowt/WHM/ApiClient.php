@@ -41,6 +41,11 @@ class ApiClient
     public $port;
 
     /**
+     * @var null|ApiClient\CPanelPackage[] Cache of Packages.
+     */
+    private $_cache_packages;
+
+    /**
      * @param $username string API Username
      * @param $access_hash string API Access Hash
      * @param string $host string API Host
@@ -84,16 +89,8 @@ class ApiClient
         // Close the connection and return the data.
         curl_close($ch);
 
-        if ($is_json) {
-            $json = json_decode($data);
-
-            if (isset($json->status) && $json->status == 1) return $json;
-
-            if ($json->cpanelresult->data->reason) throw new ApiException($json->cpanelresult->data->reason);
-            else throw new ApiException('No Results, Reason unknown');
-        }
-
-        return $data;
+        if ($is_json) return json_decode($data);
+        else return $data;
     }
 
     /**
@@ -128,8 +125,40 @@ class ApiClient
             'search' => $search,
             'searchtype' => $search_type,
         ]);
-
         return $this->_dataToObject($data->acct, ApiClient\CPanelAccount::class);
+    }
+
+    /**
+     * Get a WHM Package by name.
+     * @param $package_name
+     * @return ApiClient\CPanelPackage
+     * @throws UserException
+     */
+    public function getPackage($package_name)
+    {
+        // Cache package list if not cached.
+        if ($this->_cache_packages == null) $this->_cache_packages = $this->getPackageList();
+
+        // Find package and return.
+        foreach ($this->_cache_packages as $pack)
+            if ($pack->getName() == $package_name) return $pack;
+
+        // Return Error
+        throw new UserException('Package not found: ' . $package_name);
+
+    }
+
+    /**
+     * Get a list of WHM Packages.
+     * @return ApiClient\CPanelPackage
+     * @throws ApiException
+     * @throws \Exception
+     */
+    public function getPackageList()
+    {
+        $data = $this->doApiCall('listpkgs');
+        if (property_exists($data, 'package')) return $this->_dataToObject($data->package, ApiClient\CPanelPackage::class);
+        else return [];
     }
 
     /**

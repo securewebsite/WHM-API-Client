@@ -1,26 +1,48 @@
 <?php
 
-// Load Config
-$config = parse_ini_file('config.ini');
-
 // Define class autoloader.
 spl_autoload_register(function ($class) {
     $filename = '../src/' . str_replace('\\', DIRECTORY_SEPARATOR, $class) . '.php';
     if (file_exists($filename)) require($filename);
 });
 
+// Define the testing class.
+function testWhmObjects(\RCrowt\WHM\ApiClient\CPanelObject $object, $prefixes = ['is', 'get', 'jsonSerialize'])
+{
+    $out = [];
+    $reflection = new ReflectionObject($object);
 
+    foreach ($reflection->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
+
+        // Skip Methods with Parameters
+        if ($method->getNumberOfRequiredParameters() > 0) continue;
+
+        // Call methods with defined prefixes.
+        foreach ($prefixes as $p) {
+            if (substr($method->name, 0, strlen($p)) == $p) {
+                $out[$method->name] = call_user_func([$object, $method->name]);
+            }
+        }
+    }
+
+    return $out;
+}
+
+// Connect to the API and define the login credentials.
+$config = parse_ini_file('config.ini');
 $api = new \RCrowt\WHM\ApiClient($config['username'], $config['access_hash'], $config['host']);
 
+$debug = [];
 
-foreach ($api->getAccountList() as $act) {
-    echo '<pre>';
+// Test account listings.
+$debug['getAccountList'] = [];
+foreach ($api->getAccountList() as $act)
+    $debug['getAccountList'][] = testWhmObjects($act);
 
-    foreach (get_class_methods($act) as $method)
-        if (substr($method, 0, 1) != '_')
-            var_dump([$method, call_user_func_array([$act, $method], [null, null, null])]);
+// Test package listings
+$debug['getPackageList'] = [];
+foreach ($api->getPackageList() as $pack)
+    $debug['getPackageList'][] = testWhmObjects($pack);
 
-    var_dump($act);
-
-    echo '</pre><hr/>';
-}
+// Output Results
+exit(json_encode($debug));
