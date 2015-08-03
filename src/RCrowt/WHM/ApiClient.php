@@ -125,7 +125,7 @@ class ApiClient
             'search' => $search,
             'searchtype' => $search_type,
         ]);
-        return $this->_dataToObject($data->acct, ApiClient\CPanelAccount::class);
+        return $this->_dataToObject($data->acct, new ApiClient\CPanelAccount());
     }
 
     /**
@@ -157,7 +157,7 @@ class ApiClient
     public function getPackageList()
     {
         $data = $this->doApiCall('listpkgs');
-        if (property_exists($data, 'package')) return $this->_dataToObject($data->package, ApiClient\CPanelPackage::class);
+        if (property_exists($data, 'package')) return $this->_dataToObject($data->package, new ApiClient\CPanelPackage());
         else return [];
     }
 
@@ -168,10 +168,8 @@ class ApiClient
      * @throws \Exception
      * @return array
      */
-    private function _dataToObject(array $data, $class)
+    private function _dataToObject(array $data, ApiClient\CPanelObject $class)
     {
-        if (!is_a($class, ApiClient\CPanelObject::class, true)) throw new \Exception($class . ' must implement ' . ApiClient\CPanelObject::class);
-
         $out = [];
         foreach ($data as $d) $out[] = new $class($d, $this);
         return $out;

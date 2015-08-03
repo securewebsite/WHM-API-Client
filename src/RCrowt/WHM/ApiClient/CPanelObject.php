@@ -20,7 +20,7 @@ class CPanelObject implements \JsonSerializable
      * @param \stdClass $data
      * @param ApiClient|null $client
      */
-    function __construct(\stdClass $data, ApiClient $client = null)
+	function __construct(\stdClass $data = null, ApiClient $client = null)
     {
         $this->client = $client;
         $this->data = $data;
@@ -34,7 +34,7 @@ class CPanelObject implements \JsonSerializable
      */
     public function get($index, $default = null)
     {
-        if (property_exists($this->data, $index)) return $this->data->$index;
+		if (is_object($this->data) && property_exists($this->data, $index)) return $this->data->$index;
         else return $default;
     }
 
